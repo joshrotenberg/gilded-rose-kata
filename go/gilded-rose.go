@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-var itemNameRegex *regexp.Regexp = regexp.MustCompile("(?i)^(conjured\\s+)?(.*)")
+var itemNameRegex = regexp.MustCompile(`(?i)^(conjured\s+)?(.*)`)
 
 // Item represents an item in the inventory
 type Item struct {
@@ -24,10 +24,7 @@ var items = []Item{
 
 func isConjured(item Item) bool {
 	match := itemNameRegex.FindStringSubmatch(item.name)
-	if match[1] == "" {
-		return false
-	}
-	return true
+	return match[1] != ""
 }
 
 func incrementQuality(item *Item, amount int, max int) {
