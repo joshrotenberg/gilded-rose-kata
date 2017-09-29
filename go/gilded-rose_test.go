@@ -19,20 +19,11 @@ type TestItem struct {
 	expcetedSellIn  int
 	expectedQuality int
 }
-type TestCase struct {
-	name  string
-	items []TestItem
-}
 
-func generateTestCase(name string, items ...TestItem) TestCase {
+func runTestCases(t *testing.T, name string, testItems ...TestItem) {
 
-	return TestCase{name, items}
-}
-
-func runTestCases(t *testing.T, testCase TestCase) {
-
-	for _, testItem := range testCase.items {
-		t.Run(fmt.Sprintf("%s: failure for item '%s", testCase.name, testItem.item.name), func(t *testing.T) {
+	for _, testItem := range testItems {
+		t.Run(fmt.Sprintf("%s: failure for item '%s", name, testItem.item.name), func(t *testing.T) {
 			err := UpdateItem(&testItem.item)
 			if err != nil {
 				t.Fatalf("failed to update %s: %+v", testItem.item.name, err)
@@ -48,7 +39,8 @@ func runTestCases(t *testing.T, testCase TestCase) {
 }
 func Test_CurrentInventory(t *testing.T) {
 
-	testCase := generateTestCase(
+	runTestCases(
+		t,
 		"Current Inventory",
 		TestItem{Item{vest, 10, 20}, 9, 19},
 		TestItem{Item{brie, 2, 0}, 1, 1},
@@ -57,5 +49,60 @@ func Test_CurrentInventory(t *testing.T) {
 		TestItem{Item{passes, 15, 20}, 14, 21},
 		// TestItem{Item{cake, 3, 6}, 3, 4}, // currently not implemented
 	)
-	runTestCases(t, testCase)
+}
+
+func Test_QualityDegradesTwiceAsFast(t *testing.T) {
+
+	runTestCases(
+		t,
+		"Once the sell by date has passed, quality degrades twice as fast",
+		TestItem{Item{vest, -1, 6}, -2, 4},
+		TestItem{Item{brie, -1, 20}, -2, 22}, // XXX: docs say quality degrades twice as fast, but not increases twice as fast, so 21?
+		TestItem{Item{elixir, -1, 7}, -2, 5},
+		TestItem{Item{sulfuras, -2, 8}, -2, 8},
+		TestItem{Item{passes, -3, 0}, -4, 0},
+	)
+}
+
+func Test_AgedBrieIncreases(t *testing.T) {
+
+	runTestCases(
+		t,
+		"'Aged Brie' actually increases in quality the older it gets",
+		TestItem{Item{brie, 3, 20}, 2, 21},
+		TestItem{Item{brie, 2, 5}, 1, 6},
+	)
+}
+
+func Test_Sulfuras(t *testing.T) {
+
+	runTestCases(
+		t,
+		"'Sulfuras', being a legendary item, never has to be sold or decreases in quality",
+		TestItem{Item{sulfuras, 5, 20}, 5, 20},
+		TestItem{Item{sulfuras, 50, 200}, 50, 200},
+	)
+}
+
+func Test_BackstatePasses(t *testing.T) {
+
+	runTestCases(
+		t,
+		"'Backstage passes', like aged brie, increases in quality as it's sell-in value approaches ...",
+		TestItem{Item{passes, 11, 7}, 10, 8},
+		TestItem{Item{passes, 10, 7}, 9, 9},
+		TestItem{Item{passes, 6, 7}, 5, 9},
+		TestItem{Item{passes, 5, 7}, 4, 10},
+		TestItem{Item{passes, 0, 7}, -1, 0},
+		TestItem{Item{passes, -2, 7}, -3, 0},
+	)
+}
+
+func Test_ConjuredItems(t *testing.T) {
+
+	runTestCases(
+		t,
+		"'Conjured' items degrade in quality twice as fast as normal items",
+		TestItem{Item{cake, 5, 6}, 4, 4},
+	)
 }
