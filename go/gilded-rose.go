@@ -5,6 +5,7 @@ import (
 	"regexp"
 )
 
+// itemNameRegex matches the item's name and conjured status
 var itemNameRegex = regexp.MustCompile(`(?i)^(conjured\s+)?(.*)`)
 
 // Item represents an item in the inventory
@@ -22,17 +23,22 @@ var items = []Item{
 	Item{"Conjured Mana Cake", 3, 6},
 }
 
+// isConjured returns true if the item is conjured.
 func isConjured(item Item) bool {
 	match := itemNameRegex.FindStringSubmatch(item.name)
 	return match[1] != ""
 }
 
+// incrementQuality increments the item's quality if the new quality doesn't exceed the max.
 func incrementQuality(item *Item, amount int, max int) {
 	item.quality += amount
 	if item.quality > max {
 		item.quality = max
 	}
 }
+
+// decrementQuality decrements the item's quality, testing to see if the item is conjured, and respects
+// the constraint that quality is never negative.
 func decrementQuality(item *Item, amount int) {
 	item.quality -= amount
 	if isConjured(*item) {
@@ -43,16 +49,22 @@ func decrementQuality(item *Item, amount int) {
 	}
 }
 
-// UpdateItem updates the sell-in and quality for the given item
+// UpdateItem updates the sell-in and quality for the given item. Adding an item with special rules requires
+// adding a new case matching the item's name. Items without special rules are handled by the default case.
 func UpdateItem(item *Item) {
 	switch item.name {
+	// "Aged Brie" actually increases in quality the older it gets
 	case "Aged Brie":
 		item.sellIn--
 		incrementQuality(item, 1, 50)
 
+	// "Sulfuras", being a legendary item, never has to be sold or decreases in quality
 	case "Sulfuras, Hand of Ragnaros":
 		// force 80 quality if it isn't already. does "never has to be sold" mean sellIn is always ... 1? 0? does it matter?
 		item.quality = 80
+
+	// "Backstage passes", like aged brie, increases in quality as it's sell-in value approaches; quality increases by 2 when
+	// there are 10 days or less and by 3 when there are 5 days or less but quality drops to 0 after the concert
 	case "Backstage passes to a TAFKAL80ETC concert":
 		if item.sellIn <= 5 && item.sellIn > 0 {
 			incrementQuality(item, 3, 50)
@@ -65,6 +77,7 @@ func UpdateItem(item *Item) {
 		}
 		item.sellIn--
 
+	// All other items will be handled here.
 	default:
 		if item.sellIn < 1 {
 			decrementQuality(item, 2)
