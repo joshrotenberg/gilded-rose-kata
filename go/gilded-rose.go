@@ -17,65 +17,54 @@ var items = []Item{
 	Item{"Conjured Mana Cake", 3, 6},
 }
 
-// UpdateItem updates the sell-in and quality for the given item, or it returns an error if something bad happened
-func UpdateItem(item *Item) error {
-
-	if item.name != "Aged Brie" && item.name != "Backstage passes to a TAFKAL80ETC concert" {
-		if item.quality > 0 {
-			if item.name != "Sulfuras, Hand of Ragnaros" {
-				item.quality = item.quality - 1
-			}
-		}
-	} else {
-		if item.quality < 50 {
-			item.quality = item.quality + 1
-			if item.name == "Backstage passes to a TAFKAL80ETC concert" {
-				if item.sellIn < 11 {
-					if item.quality < 50 {
-						item.quality = item.quality + 1
-					}
-				}
-				if item.sellIn < 6 {
-					if item.quality < 50 {
-						item.quality = item.quality + 1
-					}
-				}
-			}
-		}
+func incrementQuality(item *Item, amount int, max int) {
+	item.quality += amount
+	if item.quality > max {
+		item.quality = max
 	}
-
-	if item.name != "Sulfuras, Hand of Ragnaros" {
-		item.sellIn = item.sellIn - 1
+}
+func decrementQuality(item *Item, amount int) {
+	item.quality -= amount
+	if item.quality < 0 {
+		item.quality = 0
 	}
+}
 
-	if item.sellIn < 0 {
-		if item.name != "Aged Brie" {
-			if item.name != "Backstage passes to a TAFKAL80ETC concert" {
-				if item.quality > 0 {
-					if item.name != "Sulfuras, Hand of Ragnaros" {
-						item.quality = item.quality - 1
-					}
-				}
-			} else {
-				item.quality = item.quality - item.quality
-			}
+// UpdateItem updates the sell-in and quality for the given item
+func UpdateItem(item *Item) {
+	switch item.name {
+	case "Aged Brie":
+		item.sellIn--
+		incrementQuality(item, 1, 50)
+
+	case "Sulfuras, Hand of Ragnaros":
+		// force 80 quality if it isn't already. does "never has to be sold" mean sellIn is always ... 1? 0? does it matter?
+		item.quality = 80
+	case "Backstage passes to a TAFKAL80ETC concert":
+		if item.sellIn <= 5 && item.sellIn > 0 {
+			incrementQuality(item, 3, 50)
+		} else if item.sellIn <= 10 && item.sellIn > 0 {
+			incrementQuality(item, 2, 50)
+		} else if item.sellIn <= 0 {
+			item.quality = 0
 		} else {
-			if item.quality < 50 {
-				item.quality = item.quality + 1
-			}
+			incrementQuality(item, 1, 50)
 		}
+		item.sellIn--
+
+	default:
+		if item.sellIn < 1 {
+			decrementQuality(item, 2)
+		} else {
+			decrementQuality(item, 1)
+		}
+		item.sellIn--
 	}
-	return nil
 }
 
 func main() {
-	fmt.Print(items)
 	for i := 0; i < len(items); i++ {
-		err := UpdateItem(&items[i])
-		if err != nil {
-			fmt.Println(err)
-
-		}
+		UpdateItem(&items[i])
 	}
-	fmt.Print(items)
+	fmt.Println(items)
 }
