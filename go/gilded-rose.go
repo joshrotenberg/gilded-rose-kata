@@ -1,6 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
+
+var itemNameRegex *regexp.Regexp = regexp.MustCompile("(?i)^(conjured\\s+)?(.*)")
 
 // Item represents an item in the inventory
 type Item struct {
@@ -17,6 +22,14 @@ var items = []Item{
 	Item{"Conjured Mana Cake", 3, 6},
 }
 
+func isConjured(item Item) bool {
+	match := itemNameRegex.FindStringSubmatch(item.name)
+	if match[1] == "" {
+		return false
+	}
+	return true
+}
+
 func incrementQuality(item *Item, amount int, max int) {
 	item.quality += amount
 	if item.quality > max {
@@ -25,6 +38,9 @@ func incrementQuality(item *Item, amount int, max int) {
 }
 func decrementQuality(item *Item, amount int) {
 	item.quality -= amount
+	if isConjured(*item) {
+		item.quality--
+	}
 	if item.quality < 0 {
 		item.quality = 0
 	}
