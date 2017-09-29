@@ -24,12 +24,9 @@ func runTestCases(t *testing.T, name string, testItems ...TestItem) {
 
 	for _, testItem := range testItems {
 		t.Run(fmt.Sprintf("%s: failure for item '%s", name, testItem.item.name), func(t *testing.T) {
-			err := UpdateItem(&testItem.item)
-			if err != nil {
-				t.Fatalf("failed to update %s: %+v", testItem.item.name, err)
-			}
+			UpdateItem(&testItem.item)
 			if testItem.item.quality != testItem.expectedQuality {
-				t.Fatalf("unexpceted quality update for %s: expceted %d, got %d", testItem.item.name, testItem.expectedQuality, testItem.item.quality)
+				t.Fatalf("expceted quality update for %s: expceted %d, got %d", testItem.item.name, testItem.expectedQuality, testItem.item.quality)
 			}
 			if testItem.item.sellIn != testItem.expcetedSellIn {
 				t.Fatalf("unexpceted sellIn update for %s: expceted %d, got %d", testItem.item.name, testItem.expcetedSellIn, testItem.item.sellIn)
@@ -57,9 +54,9 @@ func Test_QualityDegradesTwiceAsFast(t *testing.T) {
 		t,
 		"Once the sell by date has passed, quality degrades twice as fast",
 		TestItem{Item{vest, -1, 6}, -2, 4},
-		TestItem{Item{brie, -1, 20}, -2, 22}, // XXX: docs say quality degrades twice as fast, but not increases twice as fast, so 21?
+		TestItem{Item{brie, -1, 20}, -2, 21}, // XXX: docs say quality degrades twice as fast, but not increases twice as fast, so 21?
 		TestItem{Item{elixir, -1, 7}, -2, 5},
-		TestItem{Item{sulfuras, -2, 8}, -2, 8},
+		TestItem{Item{sulfuras, -2, 8}, -2, 80},
 		TestItem{Item{passes, -3, 0}, -4, 0},
 	)
 }
@@ -79,8 +76,8 @@ func Test_Sulfuras(t *testing.T) {
 	runTestCases(
 		t,
 		"'Sulfuras', being a legendary item, never has to be sold or decreases in quality",
-		TestItem{Item{sulfuras, 5, 20}, 5, 20},
-		TestItem{Item{sulfuras, 50, 200}, 50, 200},
+		TestItem{Item{sulfuras, 5, 20}, 5, 80},
+		TestItem{Item{sulfuras, 50, 200}, 50, 80},
 	)
 }
 
